@@ -1,0 +1,407 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Learner account profile, active career path, and aggregated learning stats.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "fullName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 200
+        },
+        "careerPathId": {
+          "type": "string",
+          "enum": ["inventory", "store", "banking", "mis", ""]
+        },
+        "onboardingComplete": {
+          "type": "boolean"
+        },
+        "xp": {
+          "type": "number"
+        },
+        "streakDays": {
+          "type": "number"
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "weeklyGoalItems": {
+          "type": "number"
+        },
+        "totalLearningSeconds": {
+          "type": "number"
+        },
+        "totalAttempts": {
+          "type": "number"
+        },
+        "correctAttempts": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "uid",
+        "fullName",
+        "email",
+        "careerPathId",
+        "onboardingComplete",
+        "xp",
+        "streakDays",
+        "lastActiveDate",
+        "weeklyGoalItems",
+        "totalLearningSeconds",
+        "totalAttempts",
+        "correctAttempts",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProgressRecord": {
+      "title": "ProgressRecord",
+      "description": "Individual completion record for a concept, stage, module, or workplace simulation.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "itemType": {
+          "type": "string",
+          "enum": ["concept", "stage", "module", "simulation"]
+        },
+        "itemId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "careerPathId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "moduleId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "topic": {
+          "type": "string",
+          "maxLength": 120
+        },
+        "score": {
+          "type": "number"
+        },
+        "maxScore": {
+          "type": "number"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "itemType",
+        "itemId",
+        "careerPathId",
+        "moduleId",
+        "topic",
+        "score",
+        "maxScore",
+        "completedAt",
+        "updatedAt"
+      ]
+    },
+    "ExerciseAttempt": {
+      "title": "ExerciseAttempt",
+      "description": "Immutable log of a learner exercise, mixed practice test, or workplace simulation submission.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "careerPathId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "moduleId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "exerciseId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "exerciseTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["guided", "mixed", "simulation"]
+        },
+        "topic": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "score": {
+          "type": "number"
+        },
+        "maxScore": {
+          "type": "number"
+        },
+        "accuracy": {
+          "type": "number"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "timeSpentSeconds": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "careerPathId",
+        "moduleId",
+        "exerciseId",
+        "exerciseTitle",
+        "mode",
+        "topic",
+        "score",
+        "maxScore",
+        "accuracy",
+        "passed",
+        "timeSpentSeconds",
+        "createdAt"
+      ]
+    },
+    "Certificate": {
+      "title": "Certificate",
+      "description": "Module completion certificate issued when a learner finishes all 4 stages of a module.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "learnerName": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "careerPathId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "moduleId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "moduleTitle": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "accuracy": {
+          "type": "number"
+        },
+        "issuedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "userId",
+        "learnerName",
+        "careerPathId",
+        "moduleId",
+        "moduleTitle",
+        "accuracy",
+        "issuedAt"
+      ]
+    },
+    "CustomContent": {
+      "title": "CustomContent",
+      "description": "Admin-authored career paths, modules, concepts, exercises, or simulations.",
+      "type": "object",
+      "properties": {
+        "contentType": {
+          "type": "string",
+          "enum": ["careerPath", "module", "concept", "exercise", "simulation"]
+        },
+        "careerPathId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "moduleId": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200
+        },
+        "summary": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "difficulty": {
+          "type": "string",
+          "enum": ["Easy", "Medium", "Hard"]
+        },
+        "published": {
+          "type": "boolean"
+        },
+        "targetCell": {
+          "type": "string",
+          "maxLength": 20
+        },
+        "expectedFormula": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "expectedValue": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "hint": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "explanation": {
+          "type": "string",
+          "maxLength": 1500
+        },
+        "datasetRows": {
+          "type": "array"
+        },
+        "createdBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "contentType",
+        "careerPathId",
+        "moduleId",
+        "title",
+        "summary",
+        "difficulty",
+        "published",
+        "targetCell",
+        "expectedFormula",
+        "expectedValue",
+        "hint",
+        "explanation",
+        "createdBy",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AdminRecord": {
+      "title": "AdminRecord",
+      "description": "Trusted admin role assignment document.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "minLength": 3,
+          "maxLength": 200
+        },
+        "grantedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["uid", "email", "grantedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private learner profile and summary stats. Accessible only by owner or admin."
+    },
+    "/users/{userId}/progress/{progressId}": {
+      "schema": { "$ref": "#/entities/ProgressRecord" },
+      "description": "Per-item completion records under the learner profile."
+    },
+    "/exerciseAttempts/{attemptId}": {
+      "schema": { "$ref": "#/entities/ExerciseAttempt" },
+      "description": "Immutable learner exercise, mixed practice, and simulation attempts."
+    },
+    "/certificates/{certificateId}": {
+      "schema": { "$ref": "#/entities/Certificate" },
+      "description": "Module completion certificates earned by learners."
+    },
+    "/customContent/{contentId}": {
+      "schema": { "$ref": "#/entities/CustomContent" },
+      "description": "Admin-managed curriculum concepts, exercises, modules, and simulations."
+    },
+    "/admins/{adminUid}": {
+      "schema": { "$ref": "#/entities/AdminRecord" },
+      "description": "Trusted administrator registry."
+    }
+  }
+}

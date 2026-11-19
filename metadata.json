@@ -1,0 +1,8 @@
+{
+  "name": "Excel Career Academy",
+  "description": "Learn Excel. Practise Excel. Get Job Ready. Interactive spreadsheet training, structured career paths, guided formula practice, and real-world workplace simulations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

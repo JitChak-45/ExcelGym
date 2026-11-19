@@ -1,0 +1,305 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Core Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isBootstrapAdmin() {
+      return isVerified() && request.auth.token.email == 'jitchak95@gmail.com';
+    }
+
+    function isAdmin() {
+      return isBootstrapAdmin() || (isVerified() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Entity Validation Blueprints
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll([
+          'uid', 'fullName', 'email', 'careerPathId', 'onboardingComplete',
+          'xp', 'streakDays', 'lastActiveDate', 'weeklyGoalItems',
+          'totalLearningSeconds', 'totalAttempts', 'correctAttempts',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid', 'fullName', 'email', 'careerPathId', 'onboardingComplete',
+          'xp', 'streakDays', 'lastActiveDate', 'weeklyGoalItems',
+          'totalLearningSeconds', 'totalAttempts', 'correctAttempts',
+          'createdAt', 'updatedAt'
+        ])
+        && data.uid is string && data.uid == userId && isValidId(data.uid)
+        && data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 120
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.careerPathId is string && data.careerPathId in ['inventory', 'store', 'banking', 'mis', '']
+        && data.onboardingComplete is bool
+        && data.xp is number && data.xp >= 0 && data.xp <= 10000000
+        && data.streakDays is number && data.streakDays >= 0 && data.streakDays <= 10000
+        && data.lastActiveDate is string && data.lastActiveDate.size() <= 20
+        && data.weeklyGoalItems is number && data.weeklyGoalItems >= 1 && data.weeklyGoalItems <= 500
+        && data.totalLearningSeconds is number && data.totalLearningSeconds >= 0 && data.totalLearningSeconds <= 100000000
+        && data.totalAttempts is number && data.totalAttempts >= 0 && data.totalAttempts <= 1000000
+        && data.correctAttempts is number && data.correctAttempts >= 0 && data.correctAttempts <= data.totalAttempts
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProgressRecord(data, userId) {
+      return data.keys().hasAll([
+          'userId', 'itemType', 'itemId', 'careerPathId', 'moduleId',
+          'topic', 'score', 'maxScore', 'completedAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'itemType', 'itemId', 'careerPathId', 'moduleId',
+          'topic', 'score', 'maxScore', 'completedAt', 'updatedAt'
+        ])
+        && data.userId is string && data.userId == userId && isValidId(data.userId)
+        && data.itemType is string && data.itemType in ['concept', 'stage', 'module', 'simulation']
+        && data.itemId is string && isValidId(data.itemId)
+        && data.careerPathId is string && data.careerPathId.size() >= 1 && data.careerPathId.size() <= 64
+        && data.moduleId is string && data.moduleId.size() <= 128
+        && data.topic is string && data.topic.size() <= 120
+        && data.score is number && data.score >= 0 && data.score <= 10000
+        && data.maxScore is number && data.maxScore >= 0 && data.maxScore <= 10000
+        && data.completedAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidExerciseAttempt(data) {
+      return data.keys().hasAll([
+          'userId', 'careerPathId', 'moduleId', 'exerciseId', 'exerciseTitle',
+          'mode', 'topic', 'score', 'maxScore', 'accuracy', 'passed',
+          'timeSpentSeconds', 'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'careerPathId', 'moduleId', 'exerciseId', 'exerciseTitle',
+          'mode', 'topic', 'score', 'maxScore', 'accuracy', 'passed',
+          'timeSpentSeconds', 'createdAt'
+        ])
+        && data.userId is string && data.userId == request.auth.uid && isValidId(data.userId)
+        && data.careerPathId is string && data.careerPathId.size() >= 1 && data.careerPathId.size() <= 64
+        && data.moduleId is string && data.moduleId.size() <= 128
+        && data.exerciseId is string && data.exerciseId.size() >= 1 && data.exerciseId.size() <= 128
+        && data.exerciseTitle is string && data.exerciseTitle.size() >= 1 && data.exerciseTitle.size() <= 200
+        && data.mode is string && data.mode in ['guided', 'mixed', 'simulation']
+        && data.topic is string && data.topic.size() >= 1 && data.topic.size() <= 120
+        && data.score is number && data.score >= 0 && data.score <= 10000
+        && data.maxScore is number && data.maxScore >= 1 && data.maxScore <= 10000
+        && data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 100
+        && data.passed is bool
+        && data.timeSpentSeconds is number && data.timeSpentSeconds >= 0 && data.timeSpentSeconds <= 86400
+        && data.createdAt is timestamp;
+    }
+
+    function isValidCertificate(data) {
+      return data.keys().hasAll([
+          'userId', 'learnerName', 'careerPathId', 'moduleId', 'moduleTitle',
+          'accuracy', 'issuedAt'
+        ])
+        && data.keys().hasOnly([
+          'userId', 'learnerName', 'careerPathId', 'moduleId', 'moduleTitle',
+          'accuracy', 'issuedAt'
+        ])
+        && data.userId is string && data.userId == request.auth.uid && isValidId(data.userId)
+        && data.learnerName is string && data.learnerName.size() >= 1 && data.learnerName.size() <= 120
+        && data.careerPathId is string && data.careerPathId.size() >= 1 && data.careerPathId.size() <= 64
+        && data.moduleId is string && data.moduleId.size() >= 1 && data.moduleId.size() <= 128
+        && data.moduleTitle is string && data.moduleTitle.size() >= 1 && data.moduleTitle.size() <= 200
+        && data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 100
+        && data.issuedAt is timestamp;
+    }
+
+    function isValidCustomContent(data) {
+      return data.keys().hasAll([
+          'contentType', 'careerPathId', 'moduleId', 'title', 'summary',
+          'difficulty', 'published', 'targetCell', 'expectedFormula',
+          'expectedValue', 'hint', 'explanation', 'createdBy',
+          'createdAt', 'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'contentType', 'careerPathId', 'moduleId', 'title', 'summary',
+          'difficulty', 'published', 'targetCell', 'expectedFormula',
+          'expectedValue', 'hint', 'explanation', 'datasetRows', 'createdBy',
+          'createdAt', 'updatedAt'
+        ])
+        && data.contentType is string && data.contentType in ['careerPath', 'module', 'concept', 'exercise', 'simulation']
+        && data.careerPathId is string && data.careerPathId.size() >= 1 && data.careerPathId.size() <= 64
+        && data.moduleId is string && data.moduleId.size() <= 128
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 200
+        && data.summary is string && data.summary.size() <= 1000
+        && data.difficulty is string && data.difficulty in ['Easy', 'Medium', 'Hard']
+        && data.published is bool
+        && data.targetCell is string && data.targetCell.size() <= 20
+        && data.expectedFormula is string && data.expectedFormula.size() <= 200
+        && data.expectedValue is string && data.expectedValue.size() <= 200
+        && data.hint is string && data.hint.size() <= 500
+        && data.explanation is string && data.explanation.size() <= 1500
+        && (!('datasetRows' in data) || (data.datasetRows is list && data.datasetRows.size() <= 50 && (data.datasetRows.size() == 0 || data.datasetRows[0] is string)))
+        && data.createdBy is string && isValidId(data.createdBy)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAdminRecord(data, adminUid) {
+      return data.keys().hasAll(['uid', 'email', 'grantedAt'])
+        && data.keys().hasOnly(['uid', 'email', 'grantedAt'])
+        && data.uid is string && data.uid == adminUid && isValidId(data.uid)
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 200
+        && data.grantedAt is timestamp;
+    }
+
+    // 1. User Profiles (Strict PII Isolation)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && (isOwner(userId) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isVerified()
+        && isValidId(userId)
+        && request.auth.uid == userId
+        && isValidUserProfile(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isVerified()
+        && isValidId(userId)
+        && isValidUserProfile(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isAdmin() ||
+          (
+            isOwner(userId) && (
+              // Action: Update Profile & Career Preference
+              incoming().diff(existing()).affectedKeys().hasOnly(['fullName', 'careerPathId', 'onboardingComplete', 'weeklyGoalItems', 'updatedAt']) ||
+              // Action: Record Learning Progress & Stats
+              incoming().diff(existing()).affectedKeys().hasOnly(['xp', 'streakDays', 'lastActiveDate', 'totalLearningSeconds', 'totalAttempts', 'correctAttempts', 'updatedAt'])
+            )
+          )
+        );
+      allow delete: if isAdmin() && isValidId(userId);
+
+      // 2. Learner Progress Subcollection (Master Gate checks parent user doc exists)
+      match /progress/{progressId} {
+        allow get: if isValidId(userId) && isValidId(progressId) && (isOwner(userId) || isAdmin());
+        allow list: if isValidId(userId) && (isOwner(userId) || isAdmin());
+        allow create: if isVerified()
+          && isValidId(userId)
+          && isValidId(progressId)
+          && isValidProgressRecord(incoming(), userId)
+          && incoming().completedAt == request.time
+          && incoming().updatedAt == request.time
+          && isOwner(userId)
+          && exists(/databases/$(database)/documents/users/$(userId));
+        allow update: if isVerified()
+          && isValidId(userId)
+          && isValidId(progressId)
+          && isValidProgressRecord(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().itemId == existing().itemId
+          && incoming().itemType == existing().itemType
+          && incoming().completedAt == existing().completedAt
+          && incoming().updatedAt == request.time
+          && (
+            isAdmin() ||
+            (
+              isOwner(userId)
+              && exists(/databases/$(database)/documents/users/$(userId))
+              && incoming().diff(existing()).affectedKeys().hasOnly(['score', 'maxScore', 'updatedAt'])
+            )
+          );
+        allow delete: if isAdmin() && isValidId(userId) && isValidId(progressId);
+      }
+    }
+
+    // 3. Exercise Attempts (Immutable Audit Log + Secure List Queries)
+    match /exerciseAttempts/{attemptId} {
+      allow get: if isValidId(attemptId) && isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow create: if isVerified()
+        && isValidId(attemptId)
+        && isValidExerciseAttempt(incoming())
+        && incoming().createdAt == request.time
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(attemptId);
+    }
+
+    // 4. Certificates (Immutable Module Completion Records)
+    match /certificates/{certificateId} {
+      allow get: if isValidId(certificateId) && isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isVerified() && (existing().userId == request.auth.uid || isAdmin());
+      allow create: if isVerified()
+        && isValidId(certificateId)
+        && isValidCertificate(incoming())
+        && incoming().issuedAt == request.time
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(certificateId);
+    }
+
+    // 5. Admin-Managed Custom Curriculum Content
+    match /customContent/{contentId} {
+      allow get: if isValidId(contentId) && isVerified() && (existing().published == true || isAdmin());
+      allow list: if isVerified() && (existing().published == true || isAdmin());
+      allow create: if isVerified()
+        && isValidId(contentId)
+        && isValidCustomContent(incoming())
+        && incoming().createdBy == request.auth.uid
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time
+        && isAdmin();
+      allow update: if isVerified()
+        && isValidId(contentId)
+        && isValidCustomContent(incoming())
+        && incoming().createdBy == existing().createdBy
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'title', 'summary', 'difficulty', 'published', 'targetCell',
+          'expectedFormula', 'expectedValue', 'hint', 'explanation',
+          'datasetRows', 'updatedAt'
+        ]);
+      allow delete: if isAdmin() && isValidId(contentId);
+    }
+
+    // 6. Admin Registry
+    match /admins/{adminUid} {
+      allow get: if isValidId(adminUid) && (isOwner(adminUid) || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isVerified()
+        && isValidId(adminUid)
+        && isValidAdminRecord(incoming(), adminUid)
+        && incoming().grantedAt == request.time
+        && isAdmin();
+      allow update: if false;
+      allow delete: if isAdmin() && isValidId(adminUid);
+    }
+  }
+}
