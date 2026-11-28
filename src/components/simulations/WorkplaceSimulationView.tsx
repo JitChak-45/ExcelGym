@@ -19,6 +19,7 @@ import { WORKPLACE_SIMULATIONS } from '../../data/simulations';
 import { getCareerPath } from '../../data/curriculum';
 import { cloneWorkbook } from '../../engine/formulaEngine';
 import { evaluateChecks } from '../../engine/evaluator';
+import { playCelebration, playError } from '../../utils/soundEffects';
 import { ExcelSpreadsheet } from '../spreadsheet/ExcelSpreadsheet';
 import type { EvaluationResult, WorkbookData, WorkplaceSimulation } from '../../types';
 
@@ -76,6 +77,11 @@ export const WorkplaceSimulationView: React.FC<WorkplaceSimulationViewProps> = (
   const handleSubmit = async () => {
     if (!activeSim || !workbook) return;
     const res = evaluateChecks(workbook, activeSim.checks, activeSim.maxScore);
+    if (res.passed) {
+      playCelebration();
+    } else {
+      playError();
+    }
     setEvaluation(res);
 
     const spent = Math.max(1, Math.round((Date.now() - startedAt) / 1000));
@@ -141,6 +147,7 @@ export const WorkplaceSimulationView: React.FC<WorkplaceSimulationViewProps> = (
             </button>
             <button
               type="button"
+              data-sound="none"
               onClick={() => void handleSubmit()}
               className="flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
             >

@@ -13,6 +13,7 @@ import { ExcelSpreadsheet } from '../spreadsheet/ExcelSpreadsheet';
 import { cloneWorkbook } from '../../engine/formulaEngine';
 import { evaluateChecks } from '../../engine/evaluator';
 import { useApp } from '../../contexts/AppContext';
+import { playCelebration, playError, playHint, playSuccess } from '../../utils/soundEffects';
 
 interface ConceptLessonViewProps {
   module: CurriculumModule;
@@ -51,6 +52,11 @@ export const ConceptLessonView: React.FC<ConceptLessonViewProps> = ({
   const handleCheckTryIt = async () => {
     const res = evaluateChecks(workbook, [concept.tryItCheck], 100);
     const first = res.checkResults[0];
+    if (res.passed) {
+      playSuccess();
+    } else {
+      playError();
+    }
     setCheckFeedback({
       passed: res.passed,
       message: first?.message || (res.passed ? 'Correct!' : 'Not quite right yet. Try again!'),
@@ -84,6 +90,7 @@ export const ConceptLessonView: React.FC<ConceptLessonViewProps> = ({
       if (currentIndex < concepts.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
+        playCelebration();
         onProceedToPractice((stageNumber + 1) as 2 | 4);
       }
     } finally {
@@ -259,6 +266,7 @@ export const ConceptLessonView: React.FC<ConceptLessonViewProps> = ({
               <div className="flex items-center gap-2">
                 <button
                   type="button"
+                  data-sound="none"
                   onClick={handleCheckTryIt}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors"
                 >
@@ -266,7 +274,11 @@ export const ConceptLessonView: React.FC<ConceptLessonViewProps> = ({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowHint((h) => !h)}
+                  data-sound="none"
+                  onClick={() => {
+                    if (!showHint) playHint();
+                    setShowHint((h) => !h);
+                  }}
                   className="inline-flex items-center gap-1 px-3 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-medium rounded-lg transition-colors"
                 >
                   <HelpCircle className="w-3.5 h-3.5" />

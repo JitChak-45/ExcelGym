@@ -18,6 +18,7 @@ import { MyProgressView } from './components/progress/MyProgressView';
 import { ProfileView } from './components/profile/ProfileView';
 import { AdminPanelView } from './components/admin/AdminPanelView';
 import { getModuleById, getStageId } from './data/curriculum';
+import { installGlobalButtonSounds } from './utils/soundEffects';
 import type { CurriculumModule, ExerciseItem } from './types';
 
 interface ConceptSession {
@@ -213,6 +214,10 @@ const AcademyContent: React.FC = () => {
 };
 
 export default function App() {
+  useEffect(() => {
+    return installGlobalButtonSounds();
+  }, []);
+
   return (
     <ErrorBoundary>
       <AppProvider>

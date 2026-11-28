@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Award,
   BarChart3,
@@ -13,10 +13,17 @@ import {
   Table2,
   TerminalSquare,
   User,
+  Volume2,
+  VolumeX,
   X,
 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { getCareerPath, getLearnerLevel } from '../../data/curriculum';
+import {
+  isSoundEnabled,
+  setSoundEnabled,
+  subscribeSoundEnabled,
+} from '../../utils/soundEffects';
 import type { NavView } from '../../types';
 import { CreditFooter } from './CreditFooter';
 
@@ -40,6 +47,11 @@ const NAV_ITEMS: { id: NavView; label: string; icon: React.ComponentType<{ class
 export const AppShell: React.FC<AppShellProps> = ({ children, focusMode = false }) => {
   const { profile, activeView, setActiveView, isAdmin, isDemoMode, logout } = useApp();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [soundOn, setSoundOn] = useState<boolean>(() => isSoundEnabled());
+
+  useEffect(() => {
+    return subscribeSoundEnabled(setSoundOn);
+  }, []);
 
   if (focusMode) {
     return <div className="min-h-screen bg-slate-50 flex flex-col">{children}</div>;
@@ -209,12 +221,27 @@ export const AppShell: React.FC<AppShellProps> = ({ children, focusMode = false 
             </div>
           </div>
 
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
             <span className="hidden md:inline text-xs text-slate-500 tabular-nums whitespace-nowrap">
               {profile?.streakDays || 1}-day streak · {level.title}
             </span>
             <button
               type="button"
+              data-sound="none"
+              onClick={() => setSoundEnabled(!soundOn)}
+              title={soundOn ? 'Sound effects on (click to mute)' : 'Sound effects muted (click to unmute)'}
+              aria-label={soundOn ? 'Mute sound effects' : 'Enable sound effects'}
+              className={`p-2 rounded-lg border transition-colors shrink-0 ${
+                soundOn
+                  ? 'text-slate-600 border-slate-200 bg-white hover:bg-slate-50 hover:text-slate-900'
+                  : 'text-slate-400 border-slate-200 bg-slate-50 hover:bg-slate-100'
+              }`}
+            >
+              {soundOn ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
+            <button
+              type="button"
+              data-sound="primary"
               onClick={() => setActiveView('my-learning')}
               className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors whitespace-nowrap shrink-0"
             >

@@ -13,6 +13,7 @@ import { generateMixedPracticeQuestions, getCareerPath } from '../../data/curric
 import { ExcelSpreadsheet } from '../spreadsheet/ExcelSpreadsheet';
 import { cloneWorkbook } from '../../engine/formulaEngine';
 import { evaluateChecks } from '../../engine/evaluator';
+import { playCelebration, playError, playSuccess } from '../../utils/soundEffects';
 import type { CareerPathId, DifficultyLevel, EvaluationResult, ExerciseItem, WorkbookData } from '../../types';
 
 interface MixedPracticeViewProps {
@@ -75,6 +76,11 @@ export const MixedPracticeView: React.FC<MixedPracticeViewProps> = ({ onFocusCha
     if (!questions) return;
     const ex = questions[idx];
     const res = evaluateChecks(workbooks[idx], ex.checks, ex.points);
+    if (res.passed) {
+      playSuccess();
+    } else {
+      playError();
+    }
     setResults((prev) => {
       const next = [...prev];
       next[idx] = res;
@@ -101,6 +107,14 @@ export const MixedPracticeView: React.FC<MixedPracticeViewProps> = ({ onFocusCha
     const finalResults = questions.map((ex, idx) =>
       results[idx] ?? evaluateChecks(workbooks[idx], ex.checks, ex.points)
     );
+    const totalScore = finalResults.reduce((s, r) => s + r.score, 0);
+    const totalMax = finalResults.reduce((s, r) => s + r.maxScore, 0);
+    const overallAcc = totalMax > 0 ? Math.round((totalScore / totalMax) * 100) : 0;
+    if (overallAcc >= 70) {
+      playCelebration();
+    } else {
+      playError();
+    }
     setResults(finalResults);
     setFinished(true);
 
@@ -338,6 +352,7 @@ export const MixedPracticeView: React.FC<MixedPracticeViewProps> = ({ onFocusCha
                 {evalMode === 'instant' && (
                   <button
                     type="button"
+                    data-sound="none"
                     onClick={() => void evaluateSingle(currentIdx)}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg"
                   >
@@ -368,6 +383,7 @@ export const MixedPracticeView: React.FC<MixedPracticeViewProps> = ({ onFocusCha
                 ) : (
                   <button
                     type="button"
+                    data-sound="none"
                     onClick={() => void finishEntireTest()}
                     className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg"
                   >

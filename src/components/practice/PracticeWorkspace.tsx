@@ -14,6 +14,7 @@ import { ExcelSpreadsheet } from '../spreadsheet/ExcelSpreadsheet';
 import { cloneWorkbook } from '../../engine/formulaEngine';
 import { evaluateChecks } from '../../engine/evaluator';
 import { useApp } from '../../contexts/AppContext';
+import { playCelebration, playError, playHint, playSuccess } from '../../utils/soundEffects';
 
 interface PracticeWorkspaceProps {
   exercises: ExerciseItem[];
@@ -54,6 +55,15 @@ export const PracticeWorkspace: React.FC<PracticeWorkspaceProps> = ({
 
   const handleCheckAnswer = async () => {
     const evalRes = evaluateChecks(workbook, exercise.checks, exercise.points);
+    if (evalRes.passed) {
+      if (currentIndex === exercises.length - 1) {
+        playCelebration();
+      } else {
+        playSuccess();
+      }
+    } else {
+      playError();
+    }
     setResult(evalRes);
     const elapsed = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
 
@@ -182,7 +192,11 @@ export const PracticeWorkspace: React.FC<PracticeWorkspaceProps> = ({
                 {hintLevel < exercise.hints.length && (
                   <button
                     type="button"
-                    onClick={() => setHintLevel((h) => Math.min(exercise.hints.length, h + 1))}
+                    data-sound="none"
+                    onClick={() => {
+                      playHint();
+                      setHintLevel((h) => Math.min(exercise.hints.length, h + 1));
+                    }}
                     className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline"
                   >
                     <HelpCircle className="w-3.5 h-3.5" />
@@ -292,6 +306,7 @@ export const PracticeWorkspace: React.FC<PracticeWorkspaceProps> = ({
             <div className="flex items-center gap-2.5">
               <button
                 type="button"
+                data-sound="none"
                 disabled={submitting}
                 onClick={handleCheckAnswer}
                 className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors disabled:opacity-50"
